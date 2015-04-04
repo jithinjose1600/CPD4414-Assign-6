@@ -6,7 +6,9 @@
 
 package entity;
 
+import java.math.BigDecimal;
 import javax.enterprise.context.ApplicationScoped;
+import javax.json.Json;
 import javax.json.JsonObject;
 
 /**
@@ -74,7 +76,11 @@ public class Products {
     
     public JsonObject toJson()
     {
-        return 
+        return Json.createObjectBuilder().add("ProductID", getProductId())
+                                         .add("Name", getName())
+                                         .add("Description", getDescription())
+                                         .add("Quantity", getQuantity())
+                                         .build();
     }
     
 }
