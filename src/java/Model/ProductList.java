@@ -101,7 +101,6 @@ public class ProductList {
         p= new Products();
         try (Connection conn = DBConnection.getConnection()) {
             PreparedStatement pstmt;
-            System.out.println(query);
             pstmt = conn.prepareStatement(query);
             for (int i = 1; i <= params.length; i++) {
                 pstmt.setString(i, params[i - 1]);
