@@ -33,10 +33,10 @@ public class Products {
     }
 
     public Products(JsonObject json) {
-        productId=json.getInt("productId");
-        name=json.getString("name");
-        description=json.getString("description");
-        quantity=json.getInt("quantity");
+        //this.productId=json.getInt("ProductID");
+        this.name=json.getString("Name");
+        this.description=json.getString("Description");
+        this.quantity=json.getInt("Quantity");
     }
 
     

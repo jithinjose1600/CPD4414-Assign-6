@@ -18,10 +18,16 @@ import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
 
 /**
  *
@@ -53,70 +59,20 @@ public class ProductList {
             
         return p.toJson().toString();
     }
-/*
+
     @POST
     @Consumes("application/json")
     public Response doPost(JsonObject obj) {
-        String name = obj.getString("name");
-        String description = obj.getString("description");
-        String quantity = obj.getString("quantity");
-        int res = 0;
-        int pid = 0;
-        try (Connection conn = DBClass.getConnection()) {
-            PreparedStatement pstmt;
-            String query = "INSERT INTO PRODUCTS (Name, Description, Quantity) VALUES (?, ?, ?)";
-            pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, name);
-            pstmt.setString(2, description);
-            pstmt.setString(3, quantity);
-            res = pstmt.executeUpdate();
-            String qry = "SELECT ProductId FROM PRODUCTS WHERE  Name= ? and Description= ?";
-            pstmt = conn.prepareStatement(qry);
-            pstmt.setString(1, name);
-            pstmt.setString(2, description);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                pid = rs.getInt("ProductId");
-            }
-
-        } catch (SQLException ex) {
-            Logger.getLogger(ControllerServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (res <= 0) {
-            return Response.status(500).build();
-        } else {
-            return Response.ok("http://localhost:8080/CPD4414-Assign4/webresources/servlet/" + pid).build();
-        }
-
+     p=new Products(obj);
+     return doUpdate("INSERT INTO PRODUCTS (Name, Description, Quantity) VALUES(?, ?, ?)");
     }
 
     @PUT
     @Path("{id}")
     @Consumes({"application/json"})
     public Response doPut(@PathParam("id") String id, JsonObject obj) {
-
-        String name = obj.getString("name");
-        String description = obj.getString("description");
-        String quantity = obj.getString("quantity");
-        String query;
-        int res = 0;
-        try (Connection conn = DBClass.getConnection()) {
-            query = "UPDATE PRODUCTS SET Name=?, Description=?, Quantity=? WHERE ProductID=?";
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, name);
-            pstmt.setString(2, description);
-            pstmt.setString(3, quantity);
-            pstmt.setString(4, id);
-            res = pstmt.executeUpdate();
-
-        } catch (SQLException ex) {
-            Logger.getLogger(ControllerServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (res <= 0) {
-            return Response.status(500).build();
-        } else {
-            return Response.ok("http://localhost:8080/CPD4414-Assign4/webresources/servlet/" + id).build();
-        }
+        p=new Products(obj);
+        return doUpdate("UPDATE PRODUCTS SET Name=?, Description=?, Quantity=? WHERE ProductID=?", id);
     }
 
     @DELETE
@@ -124,21 +80,21 @@ public class ProductList {
     public Response doDelete(@PathParam("id") String id) {
         String query;
         int res = 0;
-        try (Connection conn = DBClass.getConnection()) {
+        try (Connection conn = DBConnection.getConnection()) {
             query = "DELETE FROM PRODUCTS WHERE ProductID=?";
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setString(1, id);
             res = pstmt.executeUpdate();
 
         } catch (SQLException ex) {
-            Logger.getLogger(ControllerServlet.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ProductList.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (res <= 0) {
             return Response.status(500).build();
         } else {
             return Response.ok("Deleted Successfully").build();
         }
-    }*/
+    }
     
     private List getResults(String query, String... params)
     {
@@ -152,7 +108,6 @@ public class ProductList {
             }
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                //System.out.println(rs.getInt("ProductID"));
                 p.setProductId(rs.getInt("ProductID"));
                 p.setName(rs.getString("Name"));
                 p.setDescription(rs.getString("Description"));
@@ -163,5 +118,37 @@ public class ProductList {
             Logger.getLogger(ProductList.class.getName()).log(Level.SEVERE, null, ex);
         }
         return pr;
+    }
+    private Response doUpdate(String query, String... params)
+    {
+        int res = 0;
+        int pid = 0;
+        try (Connection conn = DBConnection.getConnection()) {
+            PreparedStatement pstmt;
+            pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, p.getName());
+            pstmt.setString(2, p.getDescription());
+            pstmt.setString(3, String.valueOf(p.getQuantity()));
+            for (int i = 1; i <= params.length; i++) {
+                pstmt.setString(4, params[i - 1]);
+            }
+            res = pstmt.executeUpdate();
+            String qry = "SELECT ProductId FROM PRODUCTS WHERE  Name= ? and Description= ?";
+            pstmt = conn.prepareStatement(qry);
+            pstmt.setString(1, p.getName());
+            pstmt.setString(2, p.getDescription());
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                pid = rs.getInt("ProductId");
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(ProductList.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (res <= 0) {
+            return Response.status(500).build();
+        } else {
+            return Response.ok("http://localhost:8080/CPD4414-Assign4/webresources/servlet/" + pid).build();
+        }
     }
 }
