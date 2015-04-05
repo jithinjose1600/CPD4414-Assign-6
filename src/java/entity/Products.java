@@ -6,7 +6,6 @@
 
 package entity;
 
-import java.math.BigDecimal;
 import javax.enterprise.context.ApplicationScoped;
 import javax.json.Json;
 import javax.json.JsonObject;

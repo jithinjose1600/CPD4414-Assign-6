@@ -10,10 +10,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.inject.Inject;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 /**
@@ -22,44 +29,31 @@ import javax.ws.rs.Produces;
  */
 @Path("/products")
 public class ProductList {
+    //@Inject
     Products p;
+    List<Products> pr=new ArrayList();
     @GET
     @Produces("application/json")
     public String doGet() {
-        p=getResults("SELECT * FROM PRODUCTS");
-        return p.toJson().toString();
+        pr=getResults("SELECT * FROM PRODUCTS");
+        JsonArrayBuilder builder = Json.createArrayBuilder();
+        for(Products p : pr){
+           builder.add(p.toJson()).build();
+        }
+        JsonArray json=builder.build();
+        return json.toString();
     }
 
-    /*@GET
+    @GET
     @Path("{id}")
     @Produces({"application/json"})
     public String doGet(@PathParam("id") int id) {
-        StringWriter out = new StringWriter();
-        JsonGeneratorFactory factory = Json.createGeneratorFactory(null);
-        JsonGenerator gen = factory.createGenerator(out);
-        try (Connection conn = DBClass.getConnection()) {
-            PreparedStatement pstmt;
-            String query = "SELECT * FROM PRODUCTS WHERE ProductId = ?";
-            pstmt = conn.prepareStatement(query);
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                gen.writeStartObject()
-                        .write("productId", rs.getInt("ProductID"))
-                        .write("name", rs.getString("Name"))
-                        .write("description", rs.getString("Description"))
-                        .write("quantity", rs.getInt("Quantity"))
-                        .writeEnd();
-                gen.close();
-            } else {
-                return "Invalid Id..";
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(ControllerServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return out.toString();
+       
+        getResults("SELECT * FROM PRODUCTS WHERE ProductId = ?", String.valueOf(id));
+            
+        return p.toJson().toString();
     }
-
+/*
     @POST
     @Consumes("application/json")
     public Response doPost(JsonObject obj) {
@@ -146,8 +140,9 @@ public class ProductList {
         }
     }*/
     
-    private Products getResults(String query, String... params)
+    private List getResults(String query, String... params)
     {
+        p= new Products();
         try (Connection conn = DBConnection.getConnection()) {
             PreparedStatement pstmt;
             System.out.println(query);
@@ -157,15 +152,16 @@ public class ProductList {
             }
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                System.out.println(rs.getInt("ProductID"));
+                //System.out.println(rs.getInt("ProductID"));
                 p.setProductId(rs.getInt("ProductID"));
                 p.setName(rs.getString("Name"));
                 p.setDescription(rs.getString("Description"));
                 p.setQuantity(rs.getInt("Quantity"));
+                pr.add(p);
             }
         } catch (SQLException ex) {
             Logger.getLogger(ProductList.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return p;
+        return pr;
     }
 }
